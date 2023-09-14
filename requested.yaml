@@ -1,0 +1,25 @@
+name: tau-ml
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - bayesian-optimization
+  - boost
+  - conda-tree
+  - hydra-core
+  - law
+  - libacl
+  - matplotlib
+  - mlflow
+  - pipdeptree
+  - pytables
+  - python=3.10
+  - pytorch
+  - root
+  - rsync
+  - seaborn
+  - tensorflow=2.12.1
+  - uproot
+
+
+

@@ -2,6 +2,7 @@ import json
 import os
 import re
 import subprocess
+import yaml
 
 pypi_to_conda_matches = {
     "importlib-resources": "importlib_resources",
@@ -9,7 +10,7 @@ pypi_to_conda_matches = {
     "typing-extensions": "typing_extensions",
 }
 
-ignore_list = [ '__glibc', 'antlr4-python3-runtime' ]
+ignore_list = [ '__glibc', '__unix', '__linux', '__cuda', 'antlr4-python3-runtime' ]
 
 packages = {}
 class Package:
@@ -48,23 +49,39 @@ for line in run_cmd('conda list').split('\n'):
     packages[pkg.name] = pkg
 
 requested_packages = []
-requested_file = 'requested.txt'
+requested_file = 'requested.yaml'
 if os.path.exists(requested_file):
     print(f"Reading '{requested_file}'...")
     with open(requested_file, 'r') as f:
-        for line in f.readlines():
-            requested_packages.append(line.strip())
+        requested_yaml = yaml.safe_load(f)
+        for desc in requested_yaml['dependencies']:
+            pkg_name = desc.split('=')[0]
+            requested_packages.append(pkg_name)
+
+print(requested_packages)
 
 required_packages = set()
 
-deps_file = 'deps.json'
-if os.path.exists(deps_file):
-    print(f"Reading '{deps_file}'...")
+def WriteDependencies(deps_file, packages):
+    with open(deps_file, 'w') as f:
+        dep_data = {}
+        for pkg_name in sorted(packages):
+            pkg = packages[pkg_name]
+            if pkg.deps is not None:
+                dep_data[pkg_name] = pkg.deps
+        json.dump(dep_data, f)
+
+def ReadDependencies(deps_file, packages):
     with open(deps_file, 'r') as f:
         dep_data = json.load(f)
         for pkg_name, pkg_deps in dep_data.items():
             if pkg_name in packages:
                 packages[pkg_name].deps = pkg_deps
+
+deps_file = 'deps.json'
+if os.path.exists(deps_file):
+    print(f"Reading '{deps_file}'...")
+    ReadDependencies(deps_file, packages)
 
 def FillRequired(pkg_name, level=0):
     prefix = '  ' * level if level > 0 else ''
@@ -88,7 +105,7 @@ def FillRequired(pkg_name, level=0):
                         dep_pkg_name = pypi_to_conda_matches[dep_pkg_name]
                     pkg.deps.append(dep_pkg_name)
         else:
-            pkg_deps_str = run_cmd(f'conda-tree depends {pkg.name}', prefix)
+            pkg_deps_str = run_cmd(f'conda-tree depends --json {pkg.name}', prefix)
             pkg.deps = eval(pkg_deps_str)
     pkg.deps = [ d for d in pkg.deps if d not in ignore_list ]
     for pkg_dep in pkg.deps:
@@ -96,14 +113,7 @@ def FillRequired(pkg_name, level=0):
 
 for pkg_name in requested_packages:
     FillRequired(pkg_name)
-
-with open(deps_file, 'w') as f:
-    dep_data = {}
-    for pkg_name in sorted(packages):
-        pkg = packages[pkg_name]
-        if pkg.deps is not None:
-            dep_data[pkg_name] = pkg.deps
-    json.dump(dep_data, f)
+    WriteDependencies(deps_file, packages)
 
 nonrequired_packages = []
 for pkg_name in sorted(packages):
@@ -125,7 +135,7 @@ for pkg_name in sorted(requested_packages):
     pkg = packages[pkg_name]
     for other_pkg_name in sorted(requested_packages):
         if pkg_name == other_pkg_name: continue
-        if pkg.dependsOn(other_pkg_name):
+        if pkg.dependsOn(other_pkg_name) and other_pkg_name not in ['python']:
             print(f'{pkg_name} depends on {other_pkg_name}')
             dep_found = True
 if not dep_found:
