@@ -4,8 +4,8 @@ params:
   maxEvents: -1
   outputs:
     - file: nano.root
-      crabOutput: TODO # T2_CH_CERN:/store/group/phys_tau/kandroso/hlt_skim_prod_2024
-      finalOutput: TODO # T2_CH_CERN:/store/group/phys_tau/kandroso/hlt_skim_2024
+      crabOutput: TODO  # T2_CH_CERN:/store/group/phys_tau/kandroso/hlt_skim_prod_2024_v2
+      finalOutput: TODO  # T2_CH_CERN:/store/group/phys_tau/kandroso/hlt_skim_2024_v2
       skimCfg: skim_HLT.yaml
       skimSetup: skim_setup
 splitting: FileBased
@@ -38,9 +38,10 @@ localProcessing:
   maxRuntime: 24.0
   maxParallelJobs: 1000
   requirements: TARGET.OpSysAndVer =?= "AlmaLinux9"
+  maxNumberOfJobLogs: 10000
 targetOutputFileSize: 2048
 renewKerberosTicket: True
-htmlReport: TODO # T3_CH_CERNBOX:/store/user/kandroso/www/tau/hlt_skim_prod_2024
+htmlReport: TODO  # T3_CH_CERNBOX:/store/user/kandroso/www/tau/hlt_skim_prod_2024_v2
 whitelistFinalRecovery:
   - T1_DE_KIT
   - T1_US_FNAL

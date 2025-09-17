@@ -5,5 +5,7 @@ skim_setup:
     - drop ^.*_tmp$
     - drop ^HLTrigger.*$
   processing_module:
-    file: Production/python/skimHLT.py
+    file:
+      - ../python/skimHLT.py
+      - skimHLT.py
     function: skim
